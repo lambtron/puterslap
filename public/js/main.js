@@ -1,5 +1,5 @@
 // GAME CONSTANTS
-var PUTER_FALL_SPEED = 4;
+var PUTER_FALL_SPEED = 8;
 
 // GAME VARIABLES
 var gameCanvas;
@@ -8,6 +8,15 @@ var gameWidth, gameHeight;
 
 // Score
 var score = 0;
+var missed = 0;
+var start_time = moment();
+var timer = 0; // measured in seconds
+var frequency_of_puters = 2;
+
+// Text
+var score_text;
+var missed_text;
+var timer_text;
 
 // Player
 var touchX, touchY;
@@ -32,7 +41,7 @@ var randomOccurance;
 
 // MAIN INITIALIZATION FUNCTION
 var init = function() {
-  var assetsToLoad = ["public/img/putergrey.png", "public/img/puterorange.png", "public/img/starfield_small.jpg", "public/img/ship_frame_1.png"];
+  var assetsToLoad = ["public/img/putergrey.png", "public/img/puterorange.png", "public/img/starfield_small.jpg", "public/img/ship_frame_1.png", "public/ELWJRsor.fnt"];
 
   // CREATE A NEW ASSET LOADER
   loader = new PIXI.AssetLoader(assetsToLoad);
@@ -60,7 +69,7 @@ var init = function() {
     background.x = 0;
     background_sprite.anchor.x = 0;
     background_sprite.anchor.y = 0;
-    background.position.y = BG_START_Y_POSITION;
+    background.position.y = 0;
     background.addChild(background_sprite);
 
     // ------------ ACQUIRE THE SHIPS TEXTURES FROM PNG IMAGES AND BUILD FROM THEM A PIXI.JS MOVIECLIP --------------------
@@ -85,9 +94,23 @@ var init = function() {
     hand_graphic.position.x = gameWidth * 0.5;
     hand_graphic.position.y = gameHeight * 0.65;
 
-    // ------------ ACQUIRE THE ENEMY SHIP TEXTURE -------------
+    // ------------ ACQUIRE THE PUTER TEXTURE -------------
     puter_texture = PIXI.Texture.fromImage("public/img/puterorange.png");
     puter_width = puter_texture.width;
+
+    // TEXT.
+    var text_style = {
+      font: '20px ELWJRsor',
+      fill: 'red'
+    };
+    var text_y = gameHeight - 30;
+
+    timer_text = new PIXI.BitmapText(timer, text_style);
+    missed_text = new PIXI.BitmapText(missed, text_style);
+    timer_text.position.y = text_y;
+    timer_text.position.x = 30;
+    missed_text.position.y = text_y;
+    missed_text.position.x = 5;
 
     function Puter(_x, _y) {
       this.xPos = _x;
@@ -127,7 +150,7 @@ var init = function() {
         // this.puter_graphic.position.x = this.xPos + Math.sin(this.angle) * 20;
         // this.angle += 0.1;
         if (this.puter_graphic.position.y > gameHeight) {
-          this.isSlapped = true;
+          missed += 1;
           this.killPuter();
         }
       }
@@ -146,6 +169,8 @@ var init = function() {
     mainContainer.addChild(hand_graphic);
     puter_container = new PIXI.DisplayObjectContainer();
     mainContainer.addChild(puter_container);
+    mainContainer.addChild(missed_text);
+    mainContainer.addChild(timer_text);
 
     // ********* THE MAIN GAME LOOP STARTS HERE *********
     draw(); // START UP THE DRAWING OF OUR GAME
@@ -167,7 +192,7 @@ var init = function() {
       // GENERATE NEW ENEMY SHIP PSEUDO RANDOMLY IN A PSEUDO RANDOM X POSITION WITHIN THE GAMEWIDTH = window.innerWidth;
       randomOccurance = Math.round(Math.random() * 100);
 
-      if (randomOccurance == 50) {
+      if (randomOccurance < frequency_of_puters) {
         var random_puter = Math.round(Math.random() * (gameWidth - puter_width)); // generate a pseudo random X starting point
         var puter = new Puter(random_puter, -100); // generate an enemy ship above the visible game area (-100)
 
@@ -179,38 +204,33 @@ var init = function() {
       }
 
       // Check collisions.
+      var x2, y2, w2, h2;
+      x2 = hand_graphic.position.x - hand_graphic.width/2;
+      y2 = hand_graphic.position.y - hand_graphic.height/2;
+      w2 = hand_graphic.width;
+      h2 = hand_graphic.height;
       for (var i = 0; i < puter_array.length; i++) {
         if (puter_array[i].getX() != null) x1 = puter_array[i].getX();
         if (puter_array[i].getY() != null) y1 = puter_array[i].getY();
         if (puter_array[i].getWidth() != null) w1 = puter_array[i].getWidth();
         if (puter_array[i].getHeight() != null) h1 = puter_array[i].getHeight();
-        x2 = hand_graphic.position.x;
-        y2 = hand_graphic.position.y;
-        w2 = hand_graphic.width;
-        h2 = hand_graphic.height;
         if (hitTest(x1,y1,w1,h1,x2,y2,w2,h2)) {
           if (puter_array[i] != null) puter_array[i].killPuter();
         }
       }
 
+      timer = (moment() - start_time)/ 1000;
+      frequency_of_puters = (0.02 * (timer * timer)) + 2;
+
+      if (missed >= 1)
+        endGame();
+
+      timer_text.setText(timer);
+      missed_text.setText(missed);
+
       renderer.render(stage); // RENDER THE Pixi.js STAGE
       requestAnimationFrame(draw); // CALL AGAIN THE draw() FUNCTION IN ORDER TO DRAW THE NEXT FRAME OF OUR GAME
     }
-
-    mainContainer.setInteractive(true); // YOU NEED TO SET THIS TO TRUE IF YOU WANT INTERACTIVITY (tapping, clicking, etc...)
-
-
-
-    // mainContainer.tap = function(tapData) {
-    //   var localCoords = tapData.getLocalPosition(mainContainer); // RETRIEVE THE TAPPING COORDINATES FROM THE DEVICE ON THE mainContainer DisplayObject
-
-    //   touchY = localCoords.y;
-
-    //   if (touchY < gameHeight - bar_sprite.height) { // WE ONLY WANT TO BE ABLE TO TAP (SHOOT) ABOVE THE BAR WITH FILTERS
-    //     var fired_projectile = new Projectile(ship_graphic.position.x - 5, ship_graphic.position.y - 40);
-    //     projectiles_array.push(fired_projectile);
-    //   }
-    // }
 
     // *************** HELPER FUNCTIONS *****************
 
@@ -237,3 +257,7 @@ var init = function() {
 
 // WINDOW.ONLOAD IS ASSIGNING OUR MAIN INIT FUNCTION TO THE ONLOAD EVENT
 window.onload = init;
+
+var endGame = function endGame () {
+
+}
