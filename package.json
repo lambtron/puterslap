@@ -1,22 +1,19 @@
 {
-  "name": "YOOOAL",
-  "description": "Yo updates for World Cup 2014.",
+  "name": "puterslap",
+  "description": "a game about slapping computers.",
   "version": "0.0.1",
   "author": "Andy Jiang",
   "main": "server.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/lambtron/YOOOAL"
+    "url": "https://github.com/lambtron/puterslap"
   },
   "engines": {
-    "node": "0.10.22",
+    "node": "0.11",
     "npm": "1.1.x"
   },
   "private": true,
   "dependencies": {
-    "express": "3.x",
-    "underscore": "latest",
-    "request": "latest",
-    "mongoose": "latest"
+    "express": "3.x"
   }
 }
