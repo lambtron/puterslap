@@ -1,24 +1,16 @@
 html, body {
-	background: #9BCD9B;
-	color: white;
+	background: white;
+	color: black;
+  height: 100%;
 	font-family: 'Montserrat', sans-serif;
+  margin: 0px;
+  padding: 0px;
+  width: 100%;
 }
 
-.white {
-	color: white;
-}
-
-.dark-grey {
-  color: #4D4D4D;
-}
-
-.red {
-  color: #8B0000;
-  font-weight: 800;
-}
-
-.grey {
-  color: #ABABAB;
+#myCanvas {
+  width: 100%;
+  background: #000000;
 }
 
 footer {
@@ -27,7 +19,7 @@ footer {
 }
 
 footer a {
-	color: white;
+	color: black;
 	text-decoration: none;
 }
 
