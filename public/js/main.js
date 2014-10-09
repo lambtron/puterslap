@@ -40,6 +40,10 @@ var current_filter_num = 0;
 
 var randomOccurance;
 
+// Sound effects
+var explosion_sfx;
+var upgrade_sfx;
+
 // MAIN INITIALIZATION FUNCTION
 var init = function() {
   var assetsToLoad = ["public/img/putergrey.png", "public/img/puterorange.png", "public/img/starfield_small.jpg", "public/img/ship_frame_1.png", "public/img/explosionspritesheet.json"];
@@ -122,6 +126,11 @@ var init = function() {
     timer_text.position.x = 30;
     missed_text.position.y = text_y;
     missed_text.position.x = 5;
+
+    // Sound effects!
+    explosion_sfx = new Audio("public/img/Explosion10.wav"); // buffers automatically when created
+    upgrade_sfx = new Audio("public/img/Powerup26.wav");
+
 
     function Puter(_x, _y) {
       this.xPos = _x;
@@ -270,6 +279,7 @@ var init = function() {
           if (puter_array[i] != null) puter_array[i].killPuter();
           var explosion = new Explosion(x2 + 40, y2 + 40); // add an explosion of the enemy ship to the explosions display object container
           explosion_array.push(explosion);
+          explosion_sfx.play();
         }
       }
 
