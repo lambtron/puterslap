@@ -1,6 +1,3 @@
-// GAME CONSTANTS
-var PUTER_FALL_SPEED = 8;
-
 // GAME VARIABLES
 var gameCanvas;
 var stage, renderer;
@@ -19,7 +16,6 @@ var missed_text;
 var timer_text;
 
 // Player
-var touchX, touchY;
 var hand_texture, hand_graphic;
 
 var background_texture, background, background_sprite;
@@ -31,6 +27,11 @@ var puter_texture;
 var puter_width;
 var puter_array = [];
 
+var explosion_container;
+var explosion_textures = [];
+var explosion_array = [];
+var explosion_frames = [];
+
 var displacementMap;
 
 var info_text, filter_text;
@@ -41,7 +42,7 @@ var randomOccurance;
 
 // MAIN INITIALIZATION FUNCTION
 var init = function() {
-  var assetsToLoad = ["public/img/putergrey.png", "public/img/puterorange.png", "public/img/starfield_small.jpg", "public/img/ship_frame_1.png", "public/ELWJRsor.fnt"];
+  var assetsToLoad = ["public/img/putergrey.png", "public/img/puterorange.png", "public/img/starfield_small.jpg", "public/img/ship_frame_1.png", "public/img/explosionspritesheet.json"];
 
   // CREATE A NEW ASSET LOADER
   loader = new PIXI.AssetLoader(assetsToLoad);
@@ -98,15 +99,25 @@ var init = function() {
     puter_texture = PIXI.Texture.fromImage("public/img/puterorange.png");
     puter_width = puter_texture.width;
 
+    explosion_frames = ['explosion1.png', 'explosion2.png', 'explosion3.png',
+                       'explosion4.png', 'explosion5.png', 'explosion6.png',
+                       'explosion7.png', 'explosion8.png', 'explosion9.png',
+                       'explosion10.png', 'explosion11.png', 'explosion12.png',
+                       'explosion13.png', 'explosion14.png'];
+    for (var i = 0; i < explosion_frames.length; i ++) {
+      explosion_textures.push(PIXI.Texture.fromImage(explosion_frames[i]));
+    }
+    // explosion_textures = ["eggHead.png", "flowerTop.png", "helmlok.png", "skully.png"];
+
     // TEXT.
     var text_style = {
-      font: '20px ELWJRsor',
+      font: '20px ariel',
       fill: 'red'
     };
     var text_y = gameHeight - 30;
 
-    timer_text = new PIXI.BitmapText(timer, text_style);
-    missed_text = new PIXI.BitmapText(missed, text_style);
+    timer_text = new PIXI.Text(timer, text_style);
+    missed_text = new PIXI.Text(missed, text_style);
     timer_text.position.y = text_y;
     timer_text.position.x = 30;
     missed_text.position.y = text_y;
@@ -115,6 +126,8 @@ var init = function() {
     function Puter(_x, _y) {
       this.xPos = _x;
       this.yPos = _y;
+
+      this.fallSpeed = Math.floor(Math.random() * 6) + 4;
 
       this.isSlapped = false;
       this.angle = 0;
@@ -144,9 +157,9 @@ var init = function() {
       }
     }
 
-    Puter.prototype.fall = function(_speed) {
+    Puter.prototype.fall = function() {
       if (!this.isSlapped) {
-        this.puter_graphic.position.y += _speed;
+        this.puter_graphic.position.y += this.fallSpeed;
         // this.puter_graphic.position.x = this.xPos + Math.sin(this.angle) * 20;
         // this.angle += 0.1;
         if (this.puter_graphic.position.y > gameHeight) {
@@ -162,6 +175,43 @@ var init = function() {
       puter_array.splice(puterArrPos, 1);
     }
 
+    function Explosion(_x, _y) {
+      this.xPos = _x;
+      this.yPos = _y;
+      this.isAlive = true;
+      this.texture = explosion_textures;
+      this.explosion_graphic = new PIXI.MovieClip(this.texture);
+      this.explosion_graphic.anchor.x = 0.5;
+      this.explosion_graphic.anchor.y = 0.5;
+      this.explosion_graphic.position.x = this.xPos;
+      this.explosion_graphic.position.y = this.yPos;
+      this.explosion_graphic.animationSpeed = 0.5; // DEFAULT IS 1
+      this.explosion_graphic.loop = false;
+      this.explosion_graphic.play();
+      explosion_container.addChild(this.explosion_graphic);
+
+      // >>>>>>>> a workaround using setTimeout method to destroy explosion animations <<<<<<<<<
+      var explosion = this.explosion_graphic;
+      var that = this;
+      setTimeout(function() {
+        explosion_container.removeChild(explosion);
+        var explosionPos = explosion_array.indexOf(that);
+        explosion_array.splice(explosionPos, 1);
+      }, 500);
+      this.getX = function() {
+        return this.explosion_graphic.position.x;
+      }
+      this.getY = function() {
+        return this.explosion_graphic.position.y;
+      }
+      this.getWidth = function() {
+        return this.explosion_graphic.width;
+      }
+      this.getHeight = function() {
+        return this.explosion_graphic.height;
+      }
+    }
+
     // ------------- ADD THE SPRITES TO THE GAME STAGE (WE ARE BUILDING HERE THE LAYERS OF OUR GAME) STARTING FROM THE BOTTOM TO THE TOP -------------
     mainContainer = new PIXI.DisplayObjectContainer();
     stage.addChild(mainContainer);
@@ -169,6 +219,8 @@ var init = function() {
     mainContainer.addChild(hand_graphic);
     puter_container = new PIXI.DisplayObjectContainer();
     mainContainer.addChild(puter_container);
+    explosion_container = new PIXI.DisplayObjectContainer();
+    mainContainer.addChild(explosion_container);
     mainContainer.addChild(missed_text);
     mainContainer.addChild(timer_text);
 
@@ -200,7 +252,7 @@ var init = function() {
       }
       // move all puters
       for (var i = 0; i < puter_array.length; i++) {
-        puter_array[i].fall(PUTER_FALL_SPEED);
+        puter_array[i].fall();
       }
 
       // Check collisions.
@@ -216,6 +268,8 @@ var init = function() {
         if (puter_array[i].getHeight() != null) h1 = puter_array[i].getHeight();
         if (hitTest(x1,y1,w1,h1,x2,y2,w2,h2)) {
           if (puter_array[i] != null) puter_array[i].killPuter();
+          var explosion = new Explosion(x2 + 40, y2 + 40); // add an explosion of the enemy ship to the explosions display object container
+          explosion_array.push(explosion);
         }
       }
 
@@ -259,5 +313,5 @@ var init = function() {
 window.onload = init;
 
 var endGame = function endGame () {
-
+  console.log('end game');
 }

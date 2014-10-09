@@ -1734,6 +1734,7 @@ PIXI.DisplayObjectContainer.prototype._renderCanvas = function(renderSession)
  */
 PIXI.Sprite = function(texture)
 {
+    console.log(texture);
     PIXI.DisplayObjectContainer.call( this );
 
     /**
