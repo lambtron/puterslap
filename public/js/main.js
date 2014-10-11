@@ -27,6 +27,11 @@ var puter_texture;
 var puter_width;
 var puter_array = [];
 
+var power_up = {
+  timeLeft: 0,
+  isTrue: false
+};
+
 var explosion_container;
 var explosion_textures = [];
 var explosion_array = [];
@@ -46,7 +51,7 @@ var upgrade_sfx;
 
 // MAIN INITIALIZATION FUNCTION
 var init = function() {
-  var assetsToLoad = ["public/img/putergrey.png", "public/img/puterorange.png", "public/img/starfield_small.jpg", "public/img/ship_frame_1.png", "public/img/explosionspritesheet.json"];
+  var assetsToLoad = ["public/img/putergrey.png", "public/img/puterorange.png", "public/img/wood.png", "public/img/hand.png", "public/img/explosionspritesheet.json"];
 
   // CREATE A NEW ASSET LOADER
   loader = new PIXI.AssetLoader(assetsToLoad);
@@ -68,7 +73,7 @@ var init = function() {
     renderer = PIXI.autoDetectRenderer(gameWidth, gameHeight, gameCanvas);
 
     // ------------ PREPARE THE BACKGROUND IMAGE OF THE GAME --------------
-    background_texture = PIXI.Texture.fromImage("public/img/starfield_small.jpg");
+    background_texture = PIXI.Texture.fromImage("public/img/wood.png");
     background_sprite = new PIXI.Sprite(background_texture);
     background = new PIXI.DisplayObjectContainer();
     background.x = 0;
@@ -78,14 +83,9 @@ var init = function() {
     background.addChild(background_sprite);
 
     // ------------ ACQUIRE THE SHIPS TEXTURES FROM PNG IMAGES AND BUILD FROM THEM A PIXI.JS MOVIECLIP --------------------
-    hand_texture = [PIXI.Texture.fromImage("public/img/ship_frame_1.png")];
+    hand_texture = [PIXI.Texture.fromImage("public/img/hand.png")];
     hand_graphic = new PIXI.MovieClip(hand_texture);
 
-    // var ship_texture = [PIXI.Texture.fromImage("public/img/ship_frame_1.png"), PIXI.Texture.fromImage("public/img/ship_frame_2.png"), PIXI.Texture.fromImage("public/img/ship_frame_3.png"), PIXI.Texture.fromImage("public/img/ship_frame_2.png")];
-    // ship_graphic = new PIXI.MovieClip(ship_texture);
-
-    // ship_graphic.animationSpeed = 0.5; // DEFAULT IS 1
-    // ship_graphic.loop = true;
     hand_graphic.play();
 
     // ------------ CENTER THE HANDS' ANCHOR POINT ---------------
@@ -103,6 +103,9 @@ var init = function() {
     puter_texture = PIXI.Texture.fromImage("public/img/puterorange.png");
     puter_width = puter_texture.width;
 
+    powerup_texture = PIXI.Texture.fromImage("public/img/putergrey.png");
+    powerup_width = powerup_texture.width;
+
     explosion_frames = ['explosion1.png', 'explosion2.png', 'explosion3.png',
                        'explosion4.png', 'explosion5.png', 'explosion6.png',
                        'explosion7.png', 'explosion8.png', 'explosion9.png',
@@ -111,7 +114,6 @@ var init = function() {
     for (var i = 0; i < explosion_frames.length; i ++) {
       explosion_textures.push(PIXI.Texture.fromImage(explosion_frames[i]));
     }
-    // explosion_textures = ["eggHead.png", "flowerTop.png", "helmlok.png", "skully.png"];
 
     // TEXT.
     var text_style = {
@@ -132,16 +134,21 @@ var init = function() {
     upgrade_sfx = new Audio("public/img/Powerup26.wav");
 
 
-    function Puter(_x, _y) {
+    function Puter(_x, _y, isPowerUp) {
+      this.isPowerUp = isPowerUp || false;
       this.xPos = _x;
       this.yPos = _y;
 
       this.fallSpeed = Math.floor(Math.random() * 6) + 4;
 
       this.isSlapped = false;
-      this.angle = 0;
 
-      this.texture = puter_texture;
+      if (isPowerUp) {
+        this.texture = powerup_texture;
+      } else {
+        this.texture = puter_texture;
+      }
+
       this.puter_graphic = new PIXI.Sprite(this.texture);
 
       this.puter_graphic.position.x = this.xPos;
@@ -169,19 +176,31 @@ var init = function() {
     Puter.prototype.fall = function() {
       if (!this.isSlapped) {
         this.puter_graphic.position.y += this.fallSpeed;
-        // this.puter_graphic.position.x = this.xPos + Math.sin(this.angle) * 20;
-        // this.angle += 0.1;
         if (this.puter_graphic.position.y > gameHeight) {
-          missed += 1;
+          if (!this.isPowerUp) {
+            missed += 1;
+          }
           this.killPuter();
         }
       }
     }
 
     Puter.prototype.killPuter = function() {
+      if (this.isSlapped && this.isPowerUp) {
+        // Powerup woohoo!
+        poweringUp();
+      }
       puter_container.removeChild(this.puter_graphic);
       var puterArrPos = puter_array.indexOf(this);
       puter_array.splice(puterArrPos, 1);
+    }
+
+    function poweringUp() {
+      // this lasts only 5 seconds.
+      power_up.timeLeft += 5;
+      power_up.isTrue = true;
+      hand_graphic.width = hand_graphic.width * 2;
+      hand_graphic.height = hand_graphic.height * 2;
     }
 
     function Explosion(_x, _y) {
@@ -255,10 +274,18 @@ var init = function() {
 
       if (randomOccurance < frequency_of_puters) {
         var random_puter = Math.round(Math.random() * (gameWidth - puter_width)); // generate a pseudo random X starting point
-        var puter = new Puter(random_puter, -100); // generate an enemy ship above the visible game area (-100)
+        var puter = new Puter(random_puter, -100, false); // generate an enemy ship above the visible game area (-100)
 
         puter_array.push(puter);
       }
+
+      // Generate a powerup.
+      if (randomOccurance < 2) {
+        var powerup = Math.round(Math.random() * (gameWidth - puter_width)); // generate a pseudo random X starting point
+        var puter = new Puter(powerup, -100, true); // generate an enemy ship above the visible game area (-100)
+        puter_array.push(puter);
+      }
+
       // move all puters
       for (var i = 0; i < puter_array.length; i++) {
         puter_array[i].fall();
@@ -276,7 +303,10 @@ var init = function() {
         if (puter_array[i].getWidth() != null) w1 = puter_array[i].getWidth();
         if (puter_array[i].getHeight() != null) h1 = puter_array[i].getHeight();
         if (hitTest(x1,y1,w1,h1,x2,y2,w2,h2)) {
-          if (puter_array[i] != null) puter_array[i].killPuter();
+          if (puter_array[i] != null) {
+            puter_array[i].isSlapped = true;
+            puter_array[i].killPuter();
+          }
           var explosion = new Explosion(x2 + 40, y2 + 40); // add an explosion of the enemy ship to the explosions display object container
           explosion_array.push(explosion);
           explosion_sfx.play();
@@ -286,7 +316,18 @@ var init = function() {
       timer = (moment() - start_time)/ 1000;
       frequency_of_puters = (0.02 * (timer * timer)) + 2;
 
-      if (missed >= 1)
+      if (power_up.isTrue && (Math.floor(timer * 100) % 100 == 0) ) {
+        power_up.timeLeft -= 1;
+      }
+
+      // reduce powerup timeLeft.
+      if (power_up.timeLeft == 0) {
+        hand_graphic.width = 100;
+        hand_graphic.height = 100;
+        power_up.isTrue = false;
+      }
+
+      if (missed >= 10)
         endGame();
 
       timer_text.setText(timer);
