@@ -394,13 +394,12 @@
     // Remove existing iframe
     $('#tweet iframe').remove();
       // Generate new markup
-      var tweetBtn = $('<a></a>')
-          .addClass('twitter-share-button')
-          .attr('href', 'http://twitter.com/share')
-          .attr('data-text', tweet);
-      $('#tweet').append(tweetBtn);
-      twttr.widgets.load();
-    });
+    var tweetBtn = $('<a></a>')
+        .addClass('twitter-share-button')
+        .attr('href', 'http://twitter.com/share')
+        .attr('data-text', tweet);
+    $('#tweet').append(tweetBtn);
+    twttr.widgets.load();
   }
 
   // Start game.
