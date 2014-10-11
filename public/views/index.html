@@ -14,19 +14,55 @@
   <meta name="viewport" content="width=360, user-scalable=no">
   <meta name="description" content="'puter slap"/>
 
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
 	<!-- FAVICON -->
 	<link rel="shortcut icon" href="/public/img/favicon.png">
 
 	<!-- SCROLLS -->
 	<link rel="stylesheet" href="/public/css/index.css">
-
-	<script src="/public/js/pixi.dev.js"></script>
+  <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <script src="/public/js/pixi.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.3/moment.min.js"></script>
-	<script src="/public/js/main.js"></script>
 </head>
 
 <!-- SET THE CONTROLLER AND GET ALL TODOS WITH INITIALIZE FUNCTION -->
 <body>
-	<canvas id="myCanvas">Your browser does not support HTML5 Canvas</canvas>
+  <div id="start" class="container pointer" style="margin-top: 200px; text-align: center">
+    <div class="row col-lg-12">
+      <img src="/public/img/title.png" />
+    </div>
+    <div class="row col-lg-12">
+      <div class="col-lg-6">
+        <img src="/public/img/lenovo.png" style="width: 100px"/>
+      </div>
+      <div class="col-lg-6">
+        <img src="/public/img/toughseason.png" style="width: 100px"/>
+      </div>
+    </div>
+  </div>
+  <div id="gameover" class="container hide" style="margin-top: 200px; text-align: center">
+    <div class="row col-lg-12">
+      <h1>GAME OVER</h1>
+      <p>You survived for <span id="score"></span> seconds!</p>
+      <div class="pointer" id="playagain">Play again</div>
+      <br>
+      <a class="twitter-share-button" href="https://twitter.com/share">Tweet it</a>
+    </div>
+  </div>
+	<canvas class="hide" id="myCanvas">Your browser does not support HTML5 Canvas</canvas>
 </body>
+
+<script>
+$(document).ready(function() {
+  $('#start').on('click', function() {
+    // Start game.
+    $(this).addClass('hide');
+    $('#myCanvas').removeClass('hide');
+    $.getScript('/public/js/main.js');
+  });
+});
+</script>
+<script type="text/javascript">
+window.twttr=(function(d,s,id){var t,js,fjs=d.getElementsByTagName(s)[0];if(d.getElementById(id)){return}js=d.createElement(s);js.id=id;js.src="https://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);return window.twttr||(t={_e:[],ready:function(f){t._e.push(f)}})}(document,"script","twitter-wjs"));
+</script>
 </html>

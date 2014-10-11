@@ -1,11 +1,20 @@
+@font-face {
+  font-family: 'PressStart2p';
+  src: url('/public/pressstart.ttf');
+}
+
 html, body {
 	background: white;
 	color: black;
   height: 100%;
-	font-family: 'Montserrat', sans-serif;
+	font-family: 'PressStart2p';
   margin: 0px;
   padding: 0px;
   width: 100%;
+}
+
+.pointer {
+  cursor: pointer;
 }
 
 #myCanvas {
@@ -23,4 +32,3 @@ footer a {
 	text-decoration: none;
 }
 
-@import url(http://fonts.googleapis.com/css?family=Montserrat:400,700);
