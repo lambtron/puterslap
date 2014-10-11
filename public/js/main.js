@@ -383,12 +383,23 @@
     $('#myCanvas').addClass('hide');
     $('#gameover').removeClass('hide');
     $('#score').text(timer);
-    $('.twitter-share-button').attr('data-text', 'I lasted ' + timer + ' seconds in Puter Slap! Check out the game at http://puterslap.herokuapp.com');
+    var tweet = 'I lasted ' + timer + ' seconds in Puter Slap! Check out the game at http://puterslap.herokuapp.com #lenovo #toughseason';
 
     $('#playagain').off();  // remove previous bindings.
     $('#playagain').on('click', function() {
       // another function that resets all variables.
       init();
+    });
+
+    // Remove existing iframe
+    $('#tweet iframe').remove();
+      // Generate new markup
+      var tweetBtn = $('<a></a>')
+          .addClass('twitter-share-button')
+          .attr('href', 'http://twitter.com/share')
+          .attr('data-text', tweet);
+      $('#tweet').append(tweetBtn);
+      twttr.widgets.load();
     });
   }
 
