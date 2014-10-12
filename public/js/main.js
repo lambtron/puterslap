@@ -1,20 +1,17 @@
 (function() {
-
+  var loader;
   // GAME VARIABLES
   var gameCanvas;
   var stage, renderer;
   var gameWidth, gameHeight;
 
   // Score
-  var score = 0;
   var missed = 0;
   var start_time = moment();
   var timer = 0; // measured in seconds
   var frequency_of_puters = 2;
 
   // Text
-  var score_text;
-  var missed_text;
   var timer_text;
 
   // Player
@@ -39,12 +36,6 @@
   var explosion_array = [];
   var explosion_frames = [];
 
-  var displacementMap;
-
-  var info_text, filter_text;
-
-  var current_filter_num = 0;
-
   var randomOccurance;
 
   // Sound effects
@@ -54,7 +45,6 @@
   // MAIN INITIALIZATION FUNCTION
   var init = function() {
     var assetsToLoad = ["public/img/putergrey.png", "public/img/puterorange.png", "public/img/wood.png", "public/img/hand.png", "public/img/explosionspritesheet.json"];
-
     // CREATE A NEW ASSET LOADER
     loader = new PIXI.AssetLoader(assetsToLoad);
     // USE CALLBACK
@@ -63,78 +53,79 @@
     loader.load();
 
     function onAssetsLoaded() {
-      // FETCH THE CANVAS ELEMENT
-      gameCanvas = document.getElementById("myCanvas");
 
-      // SET THE GAME WIDTH AND HEIGHT
-      gameWidth = window.innerWidth;
-      gameHeight = window.innerHeight;
+      setup();
 
-      // CREATE A NEW PIXI.JS STAGE AND SET THE AUTOMATIC RENDERER DETECTION (WEBGL OR CANVAS)
-      stage = new PIXI.Stage(0x000000);
-      renderer = PIXI.autoDetectRenderer(gameWidth, gameHeight, gameCanvas);
+      function setup() {
+          // FETCH THE CANVAS ELEMENT
+        gameCanvas = document.getElementById("myCanvas");
 
-      // ------------ PREPARE THE BACKGROUND IMAGE OF THE GAME --------------
-      background_texture = PIXI.Texture.fromImage("public/img/wood.png");
-      background_sprite = new PIXI.Sprite(background_texture);
-      background = new PIXI.DisplayObjectContainer();
-      background.x = 0;
-      background_sprite.anchor.x = 0;
-      background_sprite.anchor.y = 0;
-      background.position.y = 0;
-      background.addChild(background_sprite);
+        // SET THE GAME WIDTH AND HEIGHT
+        gameWidth = window.innerWidth;
+        gameHeight = window.innerHeight;
 
-      // ------------ ACQUIRE THE SHIPS TEXTURES FROM PNG IMAGES AND BUILD FROM THEM A PIXI.JS MOVIECLIP --------------------
-      hand_texture = [PIXI.Texture.fromImage("public/img/hand.png")];
-      hand_graphic = new PIXI.MovieClip(hand_texture);
+        // CREATE A NEW PIXI.JS STAGE AND SET THE AUTOMATIC RENDERER DETECTION (WEBGL OR CANVAS)
+        stage = new PIXI.Stage(0x000000);
+        renderer = PIXI.autoDetectRenderer(gameWidth, gameHeight, gameCanvas);
 
-      hand_graphic.play();
+        // ------------ PREPARE THE BACKGROUND IMAGE OF THE GAME --------------
+        background_texture = PIXI.Texture.fromImage("public/img/wood.png");
+        background_sprite = new PIXI.Sprite(background_texture);
+        background = new PIXI.DisplayObjectContainer();
+        background.x = 0;
+        background_sprite.anchor.x = 0;
+        background_sprite.anchor.y = 0;
+        background.position.y = 0;
+        background.addChild(background_sprite);
 
-      // ------------ CENTER THE HANDS' ANCHOR POINT ---------------
-      hand_graphic.anchor.x = 0.5;
-      hand_graphic.anchor.y = 0.5;
+        // ------------ ACQUIRE THE SHIPS TEXTURES FROM PNG IMAGES AND BUILD FROM THEM A PIXI.JS MOVIECLIP --------------------
+        hand_texture = [PIXI.Texture.fromImage("public/img/hand.png")];
+        hand_graphic = new PIXI.MovieClip(hand_texture);
 
-      hand_graphic.width = 100;
-      hand_graphic.height = 100;
+        hand_graphic.play();
 
-      // ------------ SET THE HAND IN THE DOWN-MIDDLE PART OF THE SCREEN AT THE START OF THE GAME ---------
-      hand_graphic.position.x = gameWidth * 0.5;
-      hand_graphic.position.y = gameHeight * 0.65;
+        // ------------ CENTER THE HANDS' ANCHOR POINT ---------------
+        hand_graphic.anchor.x = 0.5;
+        hand_graphic.anchor.y = 0.5;
 
-      // ------------ ACQUIRE THE PUTER TEXTURE -------------
-      puter_texture = PIXI.Texture.fromImage("public/img/puterorange.png");
-      puter_width = puter_texture.width;
+        hand_graphic.width = 100;
+        hand_graphic.height = 100;
 
-      powerup_texture = PIXI.Texture.fromImage("public/img/putergrey.png");
-      powerup_width = powerup_texture.width;
+        // ------------ SET THE HAND IN THE DOWN-MIDDLE PART OF THE SCREEN AT THE START OF THE GAME ---------
+        hand_graphic.position.x = gameWidth * 0.5;
+        hand_graphic.position.y = gameHeight * 0.65;
 
-      explosion_frames = ['explosion1.png', 'explosion2.png', 'explosion3.png',
-                         'explosion4.png', 'explosion5.png', 'explosion6.png',
-                         'explosion7.png', 'explosion8.png', 'explosion9.png',
-                         'explosion10.png', 'explosion11.png', 'explosion12.png',
-                         'explosion13.png', 'explosion14.png'];
-      for (var i = 0; i < explosion_frames.length; i ++) {
-        explosion_textures.push(PIXI.Texture.fromImage(explosion_frames[i]));
+        // ------------ ACQUIRE THE PUTER TEXTURE -------------
+        puter_texture = PIXI.Texture.fromImage("public/img/puterorange.png");
+        puter_width = puter_texture.width;
+
+        powerup_texture = PIXI.Texture.fromImage("public/img/putergrey.png");
+        powerup_width = powerup_texture.width;
+
+        explosion_frames = ['explosion1.png', 'explosion2.png', 'explosion3.png',
+                           'explosion4.png', 'explosion5.png', 'explosion6.png',
+                           'explosion7.png', 'explosion8.png', 'explosion9.png',
+                           'explosion10.png', 'explosion11.png', 'explosion12.png',
+                           'explosion13.png', 'explosion14.png'];
+        for (var i = 0; i < explosion_frames.length; i ++) {
+          explosion_textures.push(PIXI.Texture.fromImage(explosion_frames[i]));
+        }
+
+        // TEXT.
+        var text_style = {
+          font: '50px ariel',
+          fill: 'white'
+        };
+        var text_y = gameHeight - 60;
+
+        timer_text = new PIXI.Text(timer, text_style);
+        timer_text.position.y = text_y;
+        timer_text.position.x = 5;
+
+        // Sound effects!
+        explosion_sfx = new Audio("public/img/Explosion10.wav"); // buffers automatically when created
+        upgrade_sfx = new Audio("public/img/Powerup26.wav");
       }
-
-      // TEXT.
-      var text_style = {
-        font: '20px ariel',
-        fill: 'red'
-      };
-      var text_y = gameHeight - 30;
-
-      timer_text = new PIXI.Text(timer, text_style);
-      missed_text = new PIXI.Text(missed, text_style);
-      timer_text.position.y = text_y;
-      timer_text.position.x = 30;
-      missed_text.position.y = text_y;
-      missed_text.position.x = 5;
-
-      // Sound effects!
-      explosion_sfx = new Audio("public/img/Explosion10.wav"); // buffers automatically when created
-      upgrade_sfx = new Audio("public/img/Powerup26.wav");
-
 
       function Puter(_x, _y, isPowerUp) {
         this.isPowerUp = isPowerUp || false;
@@ -254,7 +245,6 @@
       mainContainer.addChild(puter_container);
       explosion_container = new PIXI.DisplayObjectContainer();
       mainContainer.addChild(explosion_container);
-      mainContainer.addChild(missed_text);
       mainContainer.addChild(timer_text);
 
       // ********* THE MAIN GAME LOOP STARTS HERE *********
@@ -332,12 +322,9 @@
           power_up.isTrue = false;
         }
 
-
         timer_text.setText(timer);
-        missed_text.setText(missed);
 
-
-        if (missed < 10) {
+        if (missed < 1) {
           renderer.render(stage); // RENDER THE Pixi.js STAGE
           requestAnimationFrame(draw); // CALL AGAIN THE draw() FUNCTION IN ORDER TO DRAW THE NEXT FRAME OF OUR GAME
         } else {
@@ -368,6 +355,17 @@
     };
   };
 
+  function newGame() {
+    // reset all game variables.
+    timer = 0;  // Score
+    missed = 0;
+    start_time = moment();
+    timer = 0; // measured in seconds
+    frequency_of_puters = 2;
+
+    init();
+  }
+
 
   var endGame = function endGame () {
     // modal:
@@ -378,17 +376,20 @@
     for (var i = stage.children.length - 1; i >= 0; i--) {
       stage.removeChild(stage.children[i]);
     };
+    puter_array.length = 0; // remove all puters
     renderer.render(stage);
 
     $('#myCanvas').addClass('hide');
     $('#gameover').removeClass('hide');
     $('#score').text(timer);
-    var tweet = 'I lasted ' + timer + ' seconds in Puter Slap! Check out the game at http://puterslap.herokuapp.com #lenovo #toughseason';
+    var tweet = 'I lasted ' + timer + ' seconds in Puter Slap! #lenovo #toughseason';
 
     $('#playagain').off();  // remove previous bindings.
     $('#playagain').on('click', function() {
       // another function that resets all variables.
-      init();
+      $('#myCanvas').removeClass('hide');
+      $('#gameover').addClass('hide');
+      newGame();
     });
 
     // Remove existing iframe
